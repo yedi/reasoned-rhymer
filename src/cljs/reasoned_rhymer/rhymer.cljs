@@ -89,11 +89,16 @@
 
 (def COLORS ["red" "orange" "yellow" "green" "blue" "violet" "purple" "brown"])
 
+(defn brs [text]
+  (print (str "br: " text))
+  (take (count (filter #{\newline} text))
+        (repeatedly (partial d/br nil))))
+
 (defn word-span [idx word wmap]
   (print [idx word])
   (let [matching-id (first (get wmap idx))
         color (if matching-id (nth (cycle COLORS) matching-id) "black")]
-    (d/span #js {:style #js {:color color}} word)))
+    (d/a #js {:style #js {:color color}} word)))
 
 (defn text-spans [text wmap]
   (print wmap)
@@ -104,10 +109,13 @@
            spans '()]
       (cond
         (empty? tokens) (reverse spans)
-        (re-matches #"\s" (first tokens))
+        (re-matches #"\s*" (first tokens))
           (recur (rest tokens)
                  idx
-                 (conj spans (d/span nil (first tokens))))
+                 (apply (partial conj spans)
+                         (if (empty? (filter #{\newline} (first tokens)))
+                           (list (d/span nil (first tokens)))
+                           (brs (first tokens)))))  ; handle line breaks
         :else (recur (rest tokens)
                      (inc idx)
                      (conj spans (word-span idx (first tokens) wmap)))))))
@@ -116,8 +124,10 @@
   (reify
     om/IRender
     (render [this]
-      (apply d/div nil
-        (text-spans (get-in data [:text]) (get-in data [:words]))))))
+      (d/div #js {:className "row"}
+        (apply d/div #js {:className "col-xs-6"}
+          (text-spans (get-in data [:text]) (get-in data [:words])))
+        (d/div #js {:className "col-xs-6"} (get-in data [:text]))))))
 
 (defn add-combos [ret [index {:keys [value streams]}]]
   (let [streams (flatten streams)
@@ -148,7 +158,7 @@
             (GET "/analysis"
                  {:params {:title (om/get-state owner :selected)}
                   :handler #(update-analysis % data)})
-            (print getting))
+            (print (str "Retrieving: " getting)))
           (recur))))
     om/IRender
     (render [this]
