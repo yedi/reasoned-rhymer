@@ -10,6 +10,8 @@
             [reasoned-rhymer.db :as db]
             [selmer.parser :as selmer]))
 
+(selmer/cache-off!)
+
 (defn generate-response [data & [status]]
   {:status (or status 200)
    :headers {"Content-Type" "application/edn"}
@@ -20,7 +22,7 @@
      (analyze! filename (slurp filename)))
   ([title txt]
      (let [poem (rhyme/format-as-poem txt)
-           rs (rhyme/rhyme-streams poem 2 6 36 2)]
+           rs (rhyme/rhyme-streams poem 2 6 24 2)]
        (db/add-poem-analysis! title txt (pr-str rs))
        rs)))
 
@@ -33,8 +35,6 @@
         txt (-> req :params :text)
         rs (analyze! title txt)]
     (generate-response (db/get-poem-data title))))
-
-(selmer/cache-off!)
 
 (defroutes app-routes
   (GET "/" [] (selmer/render-file "reasoned_rhymer/client.html"

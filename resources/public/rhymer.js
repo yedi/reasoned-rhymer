@@ -16,4 +16,4 @@ goog.addDependency("../dommy/attrs.js", ['dommy.attrs'], ['cljs.core', 'clojure.
 goog.addDependency("../dommy/template.js", ['dommy.template'], ['dommy.attrs', 'cljs.core', 'clojure.string']);
 goog.addDependency("../dommy/utils.js", ['dommy.utils'], ['cljs.core']);
 goog.addDependency("../dommy/core.js", ['dommy.core'], ['dommy.attrs', 'cljs.core', 'dommy.template', 'dommy.utils', 'clojure.string']);
-goog.addDependency("../rhyme_finder/rhymer.js", ['rhyme_finder.rhymer'], ['cljs.core', 'ajax.core', 'om.core', 'clojure.string', 'om.dom', 'cljs.reader', 'cljs.core.async', 'goog.events', 'dommy.core']);
+goog.addDependency("../reasoned_rhymer/rhymer.js", ['reasoned_rhymer.rhymer'], ['cljs.core', 'ajax.core', 'om.core', 'clojure.string', 'om.dom', 'cljs.reader', 'cljs.core.async', 'goog.events', 'dommy.core']);

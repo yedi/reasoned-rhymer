@@ -27,7 +27,7 @@
                    (-> js/initial_app_state
                        (str/replace #"&quot;" "\"")
                        (str/replace #"&amp;" "&")))]
-    (atom (gen-app-state init-data {:controls control-ch :api api-ch}))))
+    (atom (gen-app-state init-data {:controls controls-ch :api api-ch}))))
 
 (defn header [data owner]
   (reify
@@ -87,6 +87,54 @@
                             :value (om/get-state owner :text)
                             :onChange #(handle-change % owner :text)}))))))
 
+(def COLORS ["red" "orange" "yellow" "green" "blue" "violet" "purple" "brown"])
+
+(defn word-span [idx word wmap]
+  (print [idx word])
+  (let [matching-id (first (get wmap idx))
+        color (if matching-id (nth (cycle COLORS) matching-id) "black")]
+    (d/span #js {:style #js {:color color}} word)))
+
+(defn text-spans [text wmap]
+  (print wmap)
+  (let [tokens (map (partial apply str)
+                    (partition-by #{\space \tab \newline} text))]
+    (loop [tokens tokens
+           idx 0
+           spans '()]
+      (cond
+        (empty? tokens) (reverse spans)
+        (re-matches #"\s" (first tokens))
+          (recur (rest tokens)
+                 idx
+                 (conj spans (d/span nil (first tokens))))
+        :else (recur (rest tokens)
+                     (inc idx)
+                     (conj spans (word-span idx (first tokens) wmap)))))))
+
+(defn analysis-view [data owner]
+  (reify
+    om/IRender
+    (render [this]
+      (apply d/div nil
+        (text-spans (get-in data [:text]) (get-in data [:words]))))))
+
+(defn add-combos [ret [index {:keys [value streams]}]]
+  (let [streams (flatten streams)
+        reducing-fn (fn [m stream]
+                      (update-in m [(:index stream)] conj index))]
+    (reduce reducing-fn ret streams)))
+
+(defn update-values [m f]
+  (into {} (for [[k v] m] [k (f v)])))
+
+(defn word=>combo [analysis]
+  (update-values (reduce add-combos {} (map vector (range) analysis)) sort))
+
+(defn update-analysis [resp data]
+  (let [wmap (word=>combo (:analysis resp))]
+    (om/update! data :analysis (assoc resp :words wmap))))
+
 (defn get-view [data owner]
   (reify
     om/IInitState
@@ -99,7 +147,7 @@
           (let [getting (<! get-ch)]
             (GET "/analysis"
                  {:params {:title (om/get-state owner :selected)}
-                  :handler (fn [resp] (om/update! data :analysis resp))})
+                  :handler #(update-analysis % data)})
             (print getting))
           (recur))))
     om/IRender
@@ -114,7 +162,7 @@
             (d/button #js {:type "button" :className "btn btn-info"
                            :onClick (fn [e] (put! get-ch selected) false)}
               "See Analysis"))
-          (d/div nil (get-in data [:analysis :text])))))))
+          (om/build analysis-view (:analysis data)))))))
 
 (defn app [data owner opts]
   (reify
@@ -135,9 +183,6 @@
      {:target target
       :opts {:comms comms}})))
 
-@app-state
-
-(print (get-in @app-state [:analysis :streams]))
-
 (start (sel1 :#app) app-state)
 
+(print (get-in @app-state [:analysis :analysis]))
