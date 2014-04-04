@@ -143,11 +143,56 @@
       (apply d/div #js {:className "col-xs-6"}
         (text-spans data)))))
 
+;; ======================================================================
+;; TODO: Replace with rhyme-finder equivalents when cljx support is added
+
+(defn compress [coll]
+  (when-let [[f & r] (seq coll)]
+    (if (= f (first r))
+      (compress r)
+      (cons f (compress r)))))
+
+(defn rstreams->words [rstreams]
+  (print rstreams)
+  ; #todo replace with the rhyme-finder version when cljx support is added
+  "streams are a phone/word combination
+   rstreams are a list of streams
+   ([{:index 88, :phone 'eh', :word 'there'}
+     {:index 89, :phone 'ow', :word 'goes'}
+     {:index 90, :phone 'ae', :word 'gravity'}
+     {:index 90, :phone 'ah', :word 'gravity'}
+     {:index 90, :phone 'iy', :word 'gravity'}]
+    [{:index 93, :phone 'eh', :word 'there'}
+     {:index 94, :phone 'ow', :word 'goes'}
+     {:index 95, :phone 'ae', :word 'rabbit'}
+     {:index 95, :phone 'ah', :word 'rabbit'}
+     {:index 97, :phone 'iy', :word 'he'}]) =>
+   ('there goes gravity' 'there goes rabbit he')"
+  (map (fn [rstream] (str/join " " (compress (map :word rstream))))
+       rstreams))
+
+;; ======================================================================
+
+
+(defn combo-view [data owner]
+  (print (:value data))
+  (reify
+    om/IRender
+    (render [this]
+      (apply d/div nil
+        (d/strong nil (str/join "-" (:value data)))
+             (let [streams (if (:extended data)
+                             (nth (:streams data) 0)
+                             (take 3 (nth (:streams data) 0)))]
+               (map #(d/div nil %)
+                    (rstreams->words streams)))))))
+
 (defn combos-view [data owner]
   (reify
     om/IRender
     (render [this]
-      (d/div #js {:className "col-xs-6"} (get-in data [:text])))))
+      (apply d/div #js {:className "col-xs-6"}
+        (map (partial om/build combo-view) (get-in data [:analysis]))))))
 
 (defn analysis-view [data owner]
   (reify
@@ -221,7 +266,7 @@
      {:target target
       :opts {:comms comms}})))
 
-(nth (get-in @app-state [:analysis :analysis]) 11)
+(nth (get-in @app-state [:analysis :analysis]) 19)
 
 (start (sel1 :#app) app-state)
 
