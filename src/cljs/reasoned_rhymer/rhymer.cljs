@@ -67,7 +67,7 @@
                   {:params {:title (om/get-state owner :title)
                             :text (om/get-state owner :text)}
                    :handler (fn [resp]
-                              (om/update! data :analysis resp)
+                              (update-analysis resp data)
                               (om/transact! data :titles #(conj % (:title resp)))
                               (om/update! data :viewing :get-analysis))}))
           (recur))))
@@ -87,21 +87,37 @@
                             :value (om/get-state owner :text)
                             :onChange #(handle-change % owner :text)}))))))
 
-(def COLORS ["red" "orange" "yellow" "green" "blue" "violet" "purple" "brown"])
+(def COLORS [     "FFFF00", "1CE6FF", "FF34FF", "FF4A46", "008941", "006FA6", "A30059",
+        "FFDBE5", "7A4900", "0000A6", "63FFAC", "B79762", "004D43", "8FB0FF", "997D87",
+        "5A0007", "809693", "1B4400", "4FC601", "3B5DFF", "4A3B53", "FF2F80",
+        "61615A", "BA0900", "6B7900", "00C2A0", "FFAA92", "FF90C9", "B903AA", "D16100",
+        "DDEFFF", "7B4F4B", "A1C299", "300018", "0AA6D8", "00846F",
+        "372101", "FFB500", "C2FFED", "A079BF", "CC0744", "C0B9B2", "C2FF99", "001E09",
+        "00489C", "6F0062", "0CBD66", "EEC3FF", "456D75", "B77B68", "7A87A1", "788D66",
+        "885578", "FAD09F", "FF8A9A", "D157A0", "BEC459", "456648", "0086ED", "886F4C",
+
+        "34362D", "B4A8BD", "00A6AA", "452C2C", "636375", "A3C8C9", "FF913F", "938A81",
+        "575329", "00FECF", "B05B6F", "8CD0FF", "3B9700", "04F757", "C8A1A1", "1E6E00",
+        "7900D7", "A77500", "6367A9", "A05837", "6B002C", "772600", "D790FF", "9B9700",
+        "549E79", "72418F", "BC23FF", "99ADC0", "3A2465", "922329",
+        "5B4534", "FDE8DC", "404E55", "0089A3", "CB7E98", "A4E804", "324E72", "6A3A4C",
+        "83AB58", "001C1E", "D1F7CE", "004B28", "C8D0F6", "A3A489", "806C66",
+        "BF5650", "E83000", "66796D", "DA007C", "FF1A59", "8ADBB4", "1E0200", "5B4E51",
+        "C895C5", "FF6832", "66E1D3", "CFCDAC", "D0AC94", "7ED379", "012C58"])
 
 (defn brs [text]
-  (print (str "br: " text))
   (take (count (filter #{\newline} text))
         (repeatedly (partial d/br nil))))
 
-(defn word-span [idx word wmap]
-  (print [idx word])
+(defn word-span [idx word wmap data]
   (let [matching-id (first (get wmap idx))
-        color (if matching-id (nth (cycle COLORS) matching-id) "black")]
-    (d/a #js {:style #js {:color color}} word)))
+        color (if matching-id (nth (cycle COLORS) matching-id) "black")
+        font-weight (if matching-id  "bold" "normal")]
+    (d/a #js {:style #js {:color color :font-weight font-weight}
+              :data-match matching-id :data-id idx}
+         word)))
 
-(defn text-spans [text wmap]
-  (print wmap)
+(defn text-spans [{:keys [text words] :as data}]
   (let [tokens (map (partial apply str)
                     (partition-by #{\space \tab \newline} text))]
     (loop [tokens tokens
@@ -113,21 +129,33 @@
           (recur (rest tokens)
                  idx
                  (apply (partial conj spans)
-                         (if (empty? (filter #{\newline} (first tokens)))
-                           (list (d/span nil (first tokens)))
-                           (brs (first tokens)))))  ; handle line breaks
+                        (if (empty? (filter #{\newline} (first tokens)))
+                          (list (d/span nil (first tokens)))
+                          (brs (first tokens)))))  ; handle line breaks
         :else (recur (rest tokens)
                      (inc idx)
-                     (conj spans (word-span idx (first tokens) wmap)))))))
+                     (conj spans (word-span idx (first tokens) words data)))))))
+
+(defn text-view [data owner]
+  (reify
+    om/IRender
+    (render [this]
+      (apply d/div #js {:className "col-xs-6"}
+        (text-spans data)))))
+
+(defn combos-view [data owner]
+  (reify
+    om/IRender
+    (render [this]
+      (d/div #js {:className "col-xs-6"} (get-in data [:text])))))
 
 (defn analysis-view [data owner]
   (reify
     om/IRender
     (render [this]
       (d/div #js {:className "row"}
-        (apply d/div #js {:className "col-xs-6"}
-          (text-spans (get-in data [:text]) (get-in data [:words])))
-        (d/div #js {:className "col-xs-6"} (get-in data [:text]))))))
+        (om/build text-view data)
+        (om/build combos-view data)))))
 
 (defn add-combos [ret [index {:keys [value streams]}]]
   (let [streams (flatten streams)
@@ -193,6 +221,22 @@
      {:target target
       :opts {:comms comms}})))
 
+(nth (get-in @app-state [:analysis :analysis]) 11)
+
 (start (sel1 :#app) app-state)
 
-(print (get-in @app-state [:analysis :analysis]))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
