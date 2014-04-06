@@ -87,7 +87,7 @@
                             :value (om/get-state owner :text)
                             :onChange #(handle-change % owner :text)}))))))
 
-(def COLORS [     "FFFF00", "1CE6FF", "FF34FF", "FF4A46", "008941", "006FA6", "A30059",
+(def COLORS [     "1CE6FF", "FF34FF", "FF4A46", "008941", "006FA6", "A30059",
         "FFDBE5", "7A4900", "0000A6", "63FFAC", "B79762", "004D43", "8FB0FF", "997D87",
         "5A0007", "809693", "1B4400", "4FC601", "3B5DFF", "4A3B53", "FF2F80",
         "61615A", "BA0900", "6B7900", "00C2A0", "FFAA92", "FF90C9", "B903AA", "D16100",
@@ -153,7 +153,6 @@
       (cons f (compress r)))))
 
 (defn rstreams->words [rstreams]
-  (print rstreams)
   ; #todo replace with the rhyme-finder version when cljx support is added
   "streams are a phone/word combination
    rstreams are a list of streams
@@ -175,24 +174,26 @@
 
 
 (defn combo-view [data owner]
-  (print (:value data))
   (reify
     om/IRender
     (render [this]
       (apply d/div nil
         (d/strong nil (str/join "-" (:value data)))
-             (let [streams (if (:extended data)
-                             (nth (:streams data) 0)
-                             (take 3 (nth (:streams data) 0)))]
-               (map #(d/div nil %)
-                    (rstreams->words streams)))))))
+        (let [all-streams (nth (:streams data) 0)
+              streams (if (:extended data) all-streams (take 3 all-streams))
+              stream-divs (map #(d/div nil %) (rstreams->words streams))]
+          (if (and (< 3 (count all-streams)) (not (:extended data)))
+            (concat stream-divs
+              [(d/a #js {:onClick #(om/update! data [:extended] true) :href "#"}
+                 (d/small nil "more..."))])
+            stream-divs))))))
 
 (defn combos-view [data owner]
   (reify
     om/IRender
     (render [this]
       (apply d/div #js {:className "col-xs-6"}
-        (map (partial om/build combo-view) (get-in data [:analysis]))))))
+        (om/build-all combo-view (get-in data [:analysis]))))))
 
 (defn analysis-view [data owner]
   (reify
@@ -215,7 +216,8 @@
   (update-values (reduce add-combos {} (map vector (range) analysis)) sort))
 
 (defn update-analysis [resp data]
-  (let [wmap (word=>combo (:analysis resp))]
+  (let [resp (update-in resp [:analysis] (partial into []))
+        wmap (word=>combo (:analysis resp))]
     (om/update! data :analysis (assoc resp :words wmap))))
 
 (defn get-view [data owner]
