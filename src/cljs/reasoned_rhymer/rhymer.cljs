@@ -191,17 +191,17 @@
   (reify
     om/IRenderState
     (render-state [this {:keys [combo-ch idx]}]
-      (apply d/div nil
-        (d/a #js {:onClick (a- #(put! combo-ch [:add idx])) :href "#"}
-             (str/join "-" (:value data)))
-        (let [all-streams (nth (:streams data) 0)
-              streams (if (:extended data) all-streams (take 3 all-streams))
-              stream-divs (map #(d/div nil %) (rstreams->words streams))]
-          (if (and (< 3 (count all-streams)) (not (:extended data)))
-            (concat stream-divs
-              [(d/a #js {:onClick (a- #(om/update! data [:extended] true)) :href "#"}
-                 (d/small nil "more..."))])
-            stream-divs))))))
+      (let [all-streams (nth (:streams data) 0)
+            streams (if (:extended data) all-streams (take 3 all-streams))
+            stream-divs (map #(d/div nil %) (rstreams->words streams))]
+        (apply d/div nil
+          (d/a #js {:onClick (a- #(put! combo-ch [:add idx])) :href "#"}
+               (str (str/join "-" (:value data)) " (" (count all-streams) ")"))
+            (if (and (< 3 (count all-streams)) (not (:extended data)))
+              (concat stream-divs
+                [(d/a #js {:onClick (a- #(om/update! data [:extended] true)) :href "#"}
+                   (d/small nil "more..."))])
+              stream-divs))))))
 
 (defn combos-view [data owner]
   (reify
