@@ -110,7 +110,9 @@
         (repeatedly (partial d/br nil))))
 
 (defn word-span [idx word wmap data]
-  (let [matching-id (first (get wmap idx))
+  (let [matching-ids (get wmap idx)
+        pred (if-not (empty? (:combos data)) (into #{} (:combos data)) identity)
+        matching-id (first (filter pred matching-ids))
         color (if matching-id (nth (cycle COLORS) matching-id) "black")
         font-weight (if matching-id  "bold" "normal")]
     (d/a #js {:style #js {:color color :font-weight font-weight}
@@ -136,12 +138,22 @@
                      (inc idx)
                      (conj spans (word-span idx (first tokens) words data)))))))
 
+(defn combo-slugs [idxs analysis combo-ch]
+  (map (fn [idx] (d/a #js {:style #js {:color (nth (cycle COLORS) idx)}
+                           :onClick #(put! combo-ch [:remove idx]) :href "#" }
+                      (str (str/join "-" (:value (get analysis idx))) " ")))
+       idxs))
+
 (defn text-view [data owner]
   (reify
-    om/IRender
-    (render [this]
-      (apply d/div #js {:className "col-xs-6"}
-        (text-spans data)))))
+    om/IRenderState
+    (render-state [this {:keys [combo-ch]}]
+      (d/div #js {:className "col-xs-6"}
+        (let [viewing (if-not (empty? (:combos data))
+                        (combo-slugs (:combos data) (:analysis data) combo-ch)
+                        [(d/span nil "All")])]
+          (apply d/h5 nil (d/span nil "Viewing: ") viewing))
+        (apply d/div nil (text-spans data))))))
 
 ;; ======================================================================
 ;; TODO: Replace with rhyme-finder equivalents when cljx support is added
@@ -153,7 +165,6 @@
       (cons f (compress r)))))
 
 (defn rstreams->words [rstreams]
-  ; #todo replace with the rhyme-finder version when cljx support is added
   "streams are a phone/word combination
    rstreams are a list of streams
    ([{:index 88, :phone 'eh', :word 'there'}
@@ -175,10 +186,11 @@
 
 (defn combo-view [data owner]
   (reify
-    om/IRender
-    (render [this]
+    om/IRenderState
+    (render-state [this {:keys [combo-ch idx]}]
       (apply d/div nil
-        (d/strong nil (str/join "-" (:value data)))
+        (d/a #js {:onClick #(put! combo-ch [:add idx]) :href "#"}
+             (str/join "-" (:value data)))
         (let [all-streams (nth (:streams data) 0)
               streams (if (:extended data) all-streams (take 3 all-streams))
               stream-divs (map #(d/div nil %) (rstreams->words streams))]
@@ -190,18 +202,33 @@
 
 (defn combos-view [data owner]
   (reify
-    om/IRender
-    (render [this]
+    om/IRenderState
+    (render-state [this state]
       (apply d/div #js {:className "col-xs-6"}
-        (om/build-all combo-view (get-in data [:analysis]))))))
+        (map (fn [[idx combo]]
+               (om/build combo-view combo {:state (assoc state :idx idx)}))
+             (map vector (range) (get-in data [:analysis])))))))
 
 (defn analysis-view [data owner]
   (reify
-    om/IRender
-    (render [this]
+    om/IInitState
+    (init-state [_]
+      {:combo-ch (chan)})
+    om/IWillMount
+    (will-mount [_]
+      (let [combo-ch (om/get-state owner :combo-ch)]
+        (go-loop []
+          (let [[action combo] (<! combo-ch)]
+            (print (str action "ing combo: " combo))
+            (if (= action :add)
+              (om/transact! (om/get-props owner) :combos #(conj % combo))
+              (om/transact! (om/get-props owner) :combos (partial remove #{combo}))))
+          (recur))))
+    om/IRenderState
+    (render-state [this state]
       (d/div #js {:className "row"}
-        (om/build text-view data)
-        (om/build combos-view data)))))
+        (om/build text-view data {:state state})
+        (om/build combos-view data {:state state})))))
 
 (defn add-combos [ret [index {:keys [value streams]}]]
   (let [streams (flatten streams)
@@ -267,8 +294,6 @@
      state
      {:target target
       :opts {:comms comms}})))
-
-(nth (get-in @app-state [:analysis :analysis]) 19)
 
 (start (sel1 :#app) app-state)
 
