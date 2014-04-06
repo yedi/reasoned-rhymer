@@ -29,6 +29,9 @@
                        (str/replace #"&amp;" "&")))]
     (atom (gen-app-state init-data {:controls controls-ch :api api-ch}))))
 
+(defn a- [func]
+  (fn [] (func) false))
+
 (defn header [data owner]
   (reify
     om/IRender
@@ -90,7 +93,7 @@
 (def COLORS [     "1CE6FF", "FF34FF", "FF4A46", "008941", "006FA6", "A30059",
         "FFDBE5", "7A4900", "0000A6", "63FFAC", "B79762", "004D43", "8FB0FF", "997D87",
         "5A0007", "809693", "1B4400", "4FC601", "3B5DFF", "4A3B53", "FF2F80",
-        "61615A", "BA0900", "6B7900", "00C2A0", "FFAA92", "FF90C9", "B903AA", "D16100",
+        "BA0900", "6B7900", "00C2A0", "FFAA92", "FF90C9", "B903AA", "D16100",
         "DDEFFF", "7B4F4B", "A1C299", "300018", "0AA6D8", "00846F",
         "372101", "FFB500", "C2FFED", "A079BF", "CC0744", "C0B9B2", "C2FF99", "001E09",
         "00489C", "6F0062", "0CBD66", "EEC3FF", "456D75", "B77B68", "7A87A1", "788D66",
@@ -116,7 +119,7 @@
         color (if matching-id (nth (cycle COLORS) matching-id) "black")
         font-weight (if matching-id  "bold" "normal")]
     (d/a #js {:style #js {:color color :font-weight font-weight}
-              :data-match matching-id :data-id idx}
+              :data-match matching-id :data-id idx :href "#"}
          word)))
 
 (defn text-spans [{:keys [text words] :as data}]
@@ -140,7 +143,7 @@
 
 (defn combo-slugs [idxs analysis combo-ch]
   (map (fn [idx] (d/a #js {:style #js {:color (nth (cycle COLORS) idx)}
-                           :onClick #(put! combo-ch [:remove idx]) :href "#" }
+                           :onClick (a- #(put! combo-ch [:remove idx])) :href "#" }
                       (str (str/join "-" (:value (get analysis idx))) " ")))
        idxs))
 
@@ -189,14 +192,14 @@
     om/IRenderState
     (render-state [this {:keys [combo-ch idx]}]
       (apply d/div nil
-        (d/a #js {:onClick #(put! combo-ch [:add idx]) :href "#"}
+        (d/a #js {:onClick (a- #(put! combo-ch [:add idx])) :href "#"}
              (str/join "-" (:value data)))
         (let [all-streams (nth (:streams data) 0)
               streams (if (:extended data) all-streams (take 3 all-streams))
               stream-divs (map #(d/div nil %) (rstreams->words streams))]
           (if (and (< 3 (count all-streams)) (not (:extended data)))
             (concat stream-divs
-              [(d/a #js {:onClick #(om/update! data [:extended] true) :href "#"}
+              [(d/a #js {:onClick (a- #(om/update! data [:extended] true)) :href "#"}
                  (d/small nil "more..."))])
             stream-divs))))))
 
