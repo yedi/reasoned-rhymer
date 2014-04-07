@@ -112,17 +112,18 @@
   (take (count (filter #{\newline} text))
         (repeatedly (partial d/br nil))))
 
-(defn word-span [idx word wmap data]
+(defn word-span [idx word wmap data words-ch]
   (let [matching-ids (get wmap idx)
         pred (if-not (empty? (:combos data)) (into #{} (:combos data)) identity)
         matching-id (first (filter pred matching-ids))
         color (if matching-id (nth (cycle COLORS) matching-id) "black")
         font-weight (if matching-id  "bold" "normal")]
     (d/a #js {:style #js {:color color :font-weight font-weight}
-              :data-match matching-id :data-id idx :href "#"}
+              :data-match matching-id :data-id idx :href "#"
+              :onClick (a- #(put! words-ch [:add idx]))}
          word)))
 
-(defn text-spans [{:keys [text words] :as data}]
+(defn text-spans [{:keys [text words] :as data} words-ch]
   (let [tokens (map (partial apply str)
                     (partition-by #{\space \tab \newline} text))]
     (loop [tokens tokens
@@ -139,7 +140,7 @@
                           (brs (first tokens)))))  ; handle line breaks
         :else (recur (rest tokens)
                      (inc idx)
-                     (conj spans (word-span idx (first tokens) words data)))))))
+                     (conj spans (word-span idx (first tokens) words data words-ch)))))))
 
 (defn combo-slugs [idxs analysis combo-ch]
   (map (fn [idx] (d/a #js {:style #js {:color (nth (cycle COLORS) idx)}
@@ -150,13 +151,13 @@
 (defn text-view [data owner]
   (reify
     om/IRenderState
-    (render-state [this {:keys [combo-ch]}]
+    (render-state [this {:keys [combo-ch words-ch]}]
       (d/div #js {:className "col-xs-6"}
         (let [viewing (if-not (empty? (:combos data))
                         (combo-slugs (:combos data) (:analysis data) combo-ch)
                         [(d/span nil "All")])]
           (apply d/h5 nil (d/span nil "Viewing: ") viewing))
-        (apply d/div nil (text-spans data))))))
+        (apply d/div nil (text-spans data words-ch))))))
 
 ;; ======================================================================
 ;; TODO: Replace with rhyme-finder equivalents when cljx support is added
@@ -186,6 +187,10 @@
 
 ;; ======================================================================
 
+(defn word-slugs [idxs text words-ch]
+  (map (fn [idx] (d/a #js {:onClick (a- #(put! words-ch [:remove idx])) :href "#"}
+                      (str (get (str/split text #"\s+") idx) " ")))
+       idxs))
 
 (defn combo-view [data owner]
   (reify
@@ -203,29 +208,49 @@
                    (d/small nil "more..."))])
               stream-divs))))))
 
+(defn check-words [idx {:keys [words cur-words]}]
+  (let [select-values (comp vals select-keys)
+        combo-ids (into #{} (flatten (select-values words cur-words)))]
+    (combo-ids idx)))
+
 (defn combos-view [data owner]
   (reify
     om/IRenderState
-    (render-state [this state]
-      (apply d/div #js {:className "col-xs-6"}
-        (map (fn [[idx combo]]
-               (om/build combo-view combo {:state (assoc state :idx idx)}))
-             (map vector (range) (get-in data [:analysis])))))))
+    (render-state [this {:keys [words-ch]}]
+      (let [viewing (if-not (empty? (:cur-words data))
+                      (word-slugs (:cur-words data) (:text data) words-ch)
+                      [(d/span nil "All")])
+            pred (if-not (empty? (:cur-words data))
+                   (fn [[idx _]] (check-words idx data))
+                   identity)]
+        (apply d/div #js {:className "col-xs-6"}
+          (apply d/h5 nil (d/span nil "Viewing: ") viewing)
+          (map (fn [[idx combo]]
+                 (om/build combo-view combo {:state (assoc state :idx idx)}))
+               (filter pred (map vector (range) (get-in data [:analysis])))))))))
 
 (defn analysis-view [data owner]
   (reify
     om/IInitState
     (init-state [_]
-      {:combo-ch (chan)})
+      {:combo-ch (chan) :words-ch (chan)})
     om/IWillMount
     (will-mount [_]
-      (let [combo-ch (om/get-state owner :combo-ch)]
+      (let [combo-ch (om/get-state owner :combo-ch)
+            words-ch (om/get-state owner :words-ch)]
         (go-loop []
           (let [[action combo] (<! combo-ch)]
             (print (str action "ing combo: " combo))
             (if (= action :add)
               (om/transact! (om/get-props owner) :combos #(conj % combo))
               (om/transact! (om/get-props owner) :combos (partial remove #{combo}))))
+          (recur))
+        (go-loop []
+          (let [[action word] (<! words-ch)]
+            (print (str action "ing word: " word))
+            (if (= action :add)
+              (om/transact! (om/get-props owner) :cur-words #(conj % word))
+              (om/transact! (om/get-props owner) :cur-words (partial remove #{word}))))
           (recur))))
     om/IRenderState
     (render-state [this state]
