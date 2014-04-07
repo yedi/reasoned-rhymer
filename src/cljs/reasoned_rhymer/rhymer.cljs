@@ -196,7 +196,7 @@
   (reify
     om/IRenderState
     (render-state [this {:keys [combo-ch idx]}]
-      (let [all-streams (nth (:streams data) 0)
+      (let [all-streams (apply concat (:streams data))
             streams (if (:extended data) all-streams (take 3 all-streams))
             stream-divs (map #(d/div nil %) (rstreams->words streams))]
         (apply d/div nil
