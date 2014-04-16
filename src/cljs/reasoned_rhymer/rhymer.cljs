@@ -216,7 +216,7 @@
 (defn combos-view [data owner]
   (reify
     om/IRenderState
-    (render-state [this {:keys [words-ch]}]
+    (render-state [this {:keys [words-ch] :as state}]
       (let [viewing (if-not (empty? (:cur-words data))
                       (word-slugs (:cur-words data) (:text data) words-ch)
                       [(d/span nil "All")])
