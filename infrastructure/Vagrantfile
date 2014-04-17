@@ -1,0 +1,28 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+def f(path)
+  File.dirname(__FILE__) + "/" + path
+end
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = "precise32"
+  config.vm.box_url = "http://files.vagrantup.com/precise32.box"
+
+  config.vm.network :forwarded_port, guest: 80, host: 8080
+  config.vm.network :private_network, ip: "192.168.111.222"
+
+  # config.vm.network :forwarded_port, guest: 8080, host: 8081
+  # config.vm.network :forwarded_port, guest: 80, host: 8082
+
+  config.vm.provision :ansible do |ansible|
+    ansible.playbook = f "ansible/provision.yml"
+    ansible.inventory_path = f "ansible/dev"
+    ansible.limit = 'all'
+
+    ansible.verbose = false
+  end
+end
