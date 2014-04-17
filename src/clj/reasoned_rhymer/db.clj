@@ -4,7 +4,7 @@
             [clojure.string :as str]))
 
 (def uri "datomic:free://localhost:4334/rhymer")
-(def schema (read-string (slurp "src/clj/reasoned_rhymer/schema.edn")))
+(def schema (read-string (slurp (clojure.java.io/resource "schema.edn"))))
 
 (defn create-db! []
   (d/create-database uri))
