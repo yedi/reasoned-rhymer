@@ -1,4 +1,5 @@
 (ns reasoned-rhymer.handler
+  (:gen-class)
   (:use compojure.core)
   (:use ring.middleware.edn)
   (:require [compojure.route :as route]
@@ -37,7 +38,7 @@
     (generate-response (db/get-poem-data title))))
 
 (defroutes app-routes
-  (GET "/" [] (selmer/render-file "reasoned_rhymer/client.html"
+  (GET "/" [] (selmer/render-file "templates/client.html"
                                   {:app-state (pr-str {:titles (db/get-all-titles)})}))
   (GET "/analysis" req (get-analysis req))
   (POST "/analyze" req (new-analysis req))
@@ -54,5 +55,6 @@
 
 (defn -main [& args]
   (let [port (Integer. (or (first args) "3000"))]
+    (println (str "starting server on port" port))
     (start-server port)))
 
