@@ -1,0 +1,12 @@
+# -*- mode: yaml -*-
+---
+lein_dir: /usr/local/bin/lein
+project_name: reasoned-rhymer
+project_root: /var/projects/reasoned-rhymer
+project_repo: https://github.com/yedi/reasoned-rhymer.git
+system_packages:
+  - git
+  - openjdk-7-jre-headless
+  - wget
+  - unzip
+  - vim

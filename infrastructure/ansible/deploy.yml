@@ -1,0 +1,25 @@
+
+- hosts: app
+  sudo: true
+  sudo_user: reasoned-rhymer
+
+  vars:
+    - local_app_repo: ${project_root}/code/repo/
+    - snapshot: ${local_app_repo}/target/reasoned-rhymer-0.1.0-SNAPSHOT-standalone.jar
+
+  tasks:
+  - name: Get git repo
+    git: repo=${project_repo}
+         dest=${local_app_repo}/
+         depth=10
+
+  - name: build uberjar
+    shell: chdir=${local_app_repo} lein uberjar
+
+  - name: copy uberjar
+    shell: rm -f ${project_root}/code/reasoned-rhymer.jar && cp ${snapshot} ${project_root}/code/reasoned-rhymer.jar
+
+  - name: restart web app
+    service: name=${project_name} state=restarted
+    sudo: true
+    sudo_user: root
