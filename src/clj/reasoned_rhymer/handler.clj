@@ -38,9 +38,11 @@
         rs (analyze! title txt)]
     (generate-response (db/get-poem-data title))))
 
+(def dev false)
+
 (defroutes app-routes
   (GET "/" [] (selmer/render-file "templates/client.html"
-                                  {:app-state (pr-str {:titles (db/get-all-titles)})}))
+                                  {:app-state (pr-str {:titles (db/get-all-titles)}) :dev dev}))
   (GET "/analysis" req (get-analysis req))
   (POST "/analyze" req (new-analysis req))
   (route/resources "/")
@@ -61,6 +63,7 @@
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
    [nil "--create-db" "Detach from controlling process"]
+   ["-d" "--dev" "Run the dev server"]
    ["-h" "--help"]])
 
 (defn -main [& args]
@@ -70,6 +73,8 @@
     (when (:create-db options)
       (db/init-db!)
       (System/exit 0))
+    (when (:dev options)
+      (def dev true))
     (println (str "starting server on port " (:port options)))
     (start-server (:port options))))
 

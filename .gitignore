@@ -5,6 +5,7 @@
 /classes
 /checkouts
 /songs
+/infrastructure/ansible/prod
 pom.xml
 *.jar
 *.class

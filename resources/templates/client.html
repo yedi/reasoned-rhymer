@@ -1,7 +1,9 @@
 <html>
 	<head>
 		<title>Rhyme Finder</title>
-<script type='text/javascript' id='lt_ws' src='http://localhost:52849/socket.io/lighttable/ws.js'></script>
+        {% if dev %}
+            <script type='text/javascript' id='lt_ws' src='http://localhost:52849/socket.io/lighttable/ws.js'></script>
+        {% endif %}
         <script type='text/javascript'>
             var initial_app_state = "{{ app-state }}";
         </script>
