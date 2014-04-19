@@ -67,7 +67,6 @@
    ["-h" "--help"]])
 
 (defn -main [& args]
-;;   (let [port (Integer. (or (first args) "3000"))]
   (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
     (when (< 0 (count errors)) (println (clojure.string/join "\n" errors)))
     (when (:create-db options)
