@@ -49,7 +49,7 @@
                       :onClick #(om/update! data :viewing :post-analysis)}
                "Analyze Poem"))
           (d/li nil
-            (d/a #js {:href "http://github.com/yedi/rhyme-finder"}
+            (d/a #js {:href "https://github.com/yedi/reasoned-rhymer"}
               "View on Github")))
         (d/h3 #js {:className "text-muted"} "Reasoned Rhymer")))))
 
