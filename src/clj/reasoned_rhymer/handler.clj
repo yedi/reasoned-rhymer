@@ -9,7 +9,8 @@
             [ring.adapter.jetty :refer [run-jetty]]
             [rhyme-finder.core :as rhyme]
             [reasoned-rhymer.db :as db]
-            [selmer.parser :as selmer]))
+            [selmer.parser :as selmer]
+            [clojure.tools.cli :refer [parse-opts]]))
 
 (selmer/cache-off!)
 
@@ -53,8 +54,22 @@
 (defn start-server [port]
   (run-jetty app {:port port :join? false}))
 
+(def cli-options
+  [
+   ["-p" "--port PORT" "Port number"
+    :default 3000
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
+   [nil "--create-db" "Detach from controlling process"]
+   ["-h" "--help"]])
+
 (defn -main [& args]
-  (let [port (Integer. (or (first args) "3000"))]
-    (println (str "starting server on port" port))
-    (start-server port)))
+;;   (let [port (Integer. (or (first args) "3000"))]
+  (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
+    (when (< 0 (count errors)) (println (clojure.string/join "\n" errors)))
+    (when (:create-db options)
+      (db/init-db!)
+      (System/exit 0))
+    (println (str "starting server on port " (:port options)))
+    (start-server (:port options))))
 

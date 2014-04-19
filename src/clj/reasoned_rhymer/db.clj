@@ -10,9 +10,11 @@
   (d/create-database uri))
 
 (defn connect-db! []
+  (println "connecting to the db")
   (d/connect uri))
 
 (defn init-db! []
+  (println "initializing the database")
   (create-db!)
   (let [conn (connect-db!)]
     @(d/transact conn schema)
