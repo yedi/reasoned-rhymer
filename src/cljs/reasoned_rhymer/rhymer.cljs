@@ -77,7 +77,7 @@
     om/IRender
     (render [this]
        (d/div #js {:id "add-poem" :className "nav-section"}
-         (d/form #js {:id "add-poem-form" :className "form-info"}
+         (d/form #js {:id "add-poem-form" :className "form-info form-horizontal"}
            (d/button #js {:type "button" :className "btn btn-info"
                           :onClick (fn [e] (put!(om/get-state owner :post) 1) false)}
               "Analyze poem or song")
@@ -296,13 +296,15 @@
             get-ch (om/get-state owner :get)]
         (d/div #js {:id "view-analyses" :className "nav-section"}
           (d/form #js {:id "get-analysis-form" :className "form-inline"}
-            (apply d/select #js {:id "select-title" :value selected
+            (apply d/select #js {:className "form-control" :id "select-title" :value selected
                                  :onChange #(handle-change % owner :selected)}
               (map #(d/option nil %) (:titles data)))
             (d/button #js {:type "button" :className "btn btn-info"
                            :onClick (fn [e] (put! get-ch selected) false)}
               "See Analysis"))
-          (om/build analysis-view (:analysis data)))))))
+          (if (:analysis data)
+            (om/build analysis-view (:analysis data))
+            (d/h4 nil "Select a song to load it's rhyme analysis")))))))
 
 (defn app [data owner opts]
   (reify
