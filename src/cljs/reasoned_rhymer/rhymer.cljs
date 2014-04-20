@@ -76,19 +76,22 @@
           (recur))))
     om/IRender
     (render [this]
-       (d/div #js {:id "add-poem" :className "nav-section"}
+       (d/div #js {:id "add-poem" :className "nav-section col-md-12"}
          (d/form #js {:id "add-poem-form" :className "form-info form-horizontal"}
-           (d/button #js {:type "button" :className "btn btn-info"
-                          :onClick (fn [e] (put!(om/get-state owner :post) 1) false)}
-              "Analyze poem or song")
-           (d/input #js {:id "poem-title" :type "text" :className "form-control"
-                         :placeholder "Name of poem or song"
-                         :value (om/get-state owner :title)
-                         :onChange #(handle-change % owner :title)})
-           (d/textarea #js {:id "poem-text" :rows 16 :className "form-control"
-                            :placeholder "Lyrics go here"
-                            :value (om/get-state owner :text)
-                            :onChange #(handle-change % owner :text)}))))))
+           (d/div #js {:className "form-group"}
+             (d/button #js {:type "button" :className "btn btn-info"
+                            :onClick (fn [e] (put!(om/get-state owner :post) 1) false)}
+                "Analyze poem or song"))
+           (d/div #js {:className "form-group"}
+             (d/input #js {:id "poem-title" :type "text" :className "form-control"
+                           :placeholder "Name of poem or song"
+                           :value (om/get-state owner :title)
+                           :onChange #(handle-change % owner :title)}))
+            (d/div #js {:className "form-group"}
+              (d/textarea #js {:id "poem-text" :rows 16 :className "form-control"
+                              :placeholder "Lyrics go here"
+                              :value (om/get-state owner :text)
+                              :onChange #(handle-change % owner :text)})))))))
 
 (def COLORS [     "1CE6FF", "FF34FF", "FF4A46", "008941", "006FA6", "A30059",
         "FFDBE5", "7A4900", "0000A6", "63FFAC", "B79762", "004D43", "8FB0FF", "997D87",
@@ -299,6 +302,7 @@
             (apply d/select #js {:className "form-control" :id "select-title" :value selected
                                  :onChange #(handle-change % owner :selected)}
               (map #(d/option nil %) (:titles data)))
+            " "  ; needed because bootstrap is silly
             (d/button #js {:type "button" :className "btn btn-info"
                            :onClick (fn [e] (put! get-ch selected) false)}
               "See Analysis"))
@@ -310,7 +314,7 @@
   (reify
     om/IRender
     (render [this]
-      (d/div nil
+      (d/div #js {:className "row"}
         (om/build header data)
         (cond
            (= (get-in data [:viewing]) :get-analysis) (om/build get-view data)
