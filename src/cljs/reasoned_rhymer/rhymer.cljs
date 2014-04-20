@@ -116,10 +116,10 @@
   (let [matching-ids (get wmap idx)
         pred (if-not (empty? (:combos data)) (into #{} (:combos data)) identity)
         matching-id (first (filter pred matching-ids))
-        color (if matching-id (nth (cycle COLORS) matching-id) "black")
+        color (if matching-id (str "#" (nth (cycle COLORS) matching-id)) "black")
         font-weight (if matching-id  "bold" "normal")]
     (d/a #js {:style #js {:color color :font-weight font-weight}
-              :data-match matching-id :data-id idx :href "#"
+              :data-match matching-id :react-key (str "word-" idx) :href "#"
               :onClick (a- #(put! words-ch [:add idx]))}
          word)))
 
@@ -143,7 +143,7 @@
                      (conj spans (word-span idx (first tokens) words data words-ch)))))))
 
 (defn combo-slugs [idxs analysis combo-ch]
-  (map (fn [idx] (d/a #js {:style #js {:color (nth (cycle COLORS) idx)}
+  (map (fn [idx] (d/a #js {:style #js {:color (str "#" (nth (cycle COLORS) idx))}
                            :onClick (a- #(put! combo-ch [:remove idx])) :href "#" }
                       (str (str/join "-" (:value (get analysis idx))) " ")))
        idxs))
