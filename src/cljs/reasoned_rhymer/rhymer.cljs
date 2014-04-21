@@ -91,7 +91,11 @@
               (d/textarea #js {:id "poem-text" :rows 16 :className "form-control"
                               :placeholder "Lyrics go here"
                               :value (om/get-state owner :text)
-                              :onChange #(handle-change % owner :text)})))))))
+                              :onChange #(handle-change % owner :text)}))
+            (d/p #js {:className "text-warning"}
+              (d/strong nil "Note: ")
+              "Some slang words are not currently supported because they are missing from the dictionary.
+              This could result in some missing rhyme combos"))))))
 
 (def COLORS [     "1CE6FF", "FF34FF", "FF4A46", "008941", "006FA6", "A30059",
         "FFDBE5", "7A4900", "0000A6", "63FFAC", "B79762", "004D43", "8FB0FF", "997D87",
