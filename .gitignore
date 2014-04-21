@@ -6,6 +6,7 @@
 /checkouts
 /songs
 /infrastructure/ansible/prod
+/infrastructure/ansible/files/.lein-env
 pom.xml
 *.jar
 *.class

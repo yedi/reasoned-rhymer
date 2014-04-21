@@ -7,6 +7,9 @@
   - name: Upload uberjar
     copy: src=../../target/reasoned-rhymer-0.1.0-SNAPSHOT-standalone.jar dest=${project_root}/code/reasoned-rhymer.jar
 
+  - name: Upload .lein-env file
+    copy: src=files/.lein-env dest=${project_root}/code/.lein-env
+
   - name: restart web app
     service: name=${project_name} state=restarted
     sudo: true
