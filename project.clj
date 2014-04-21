@@ -21,13 +21,22 @@
             [lein-ring "0.8.8"]]
   :source-paths ["src/clj"]
   :cljsbuild {:builds [{
-                        :id "reasoned-rhymer"
+                        :id "dev"
                         :source-paths ["src/cljs"]
                         :compiler {
                                    :output-to "resources/public/rhymer.js"
                                    :optimizations :none
                                    :output-dir "resources/public/out"
-                                   :source-map true}}]}
+                                   :source-map true}}
+                       {
+                        :id "prod"
+                        :source-paths ["src"]
+                        :compiler {
+                                   :output-to "resources/public/rhymer.js"
+                                   :optimizations :advanced
+                                   :pretty-print false
+                                   :preamble ["react/react.min.js"]
+                                   :externs ["react/externs/react.js"]}}]}
   :main reasoned-rhymer.handler
   :ring {:handler reasoned-rhymer.handler/app
          :auto-reload? true
