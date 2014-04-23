@@ -293,7 +293,8 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:get (chan) :selected (first (:titles data))})
+      {:get (chan) :selected (or (get-in data [:analysis :title])
+                                 (first (:titles data)))})
     om/IWillMount
     (will-mount [_]
       (let [get-ch (om/get-state owner :get)]
