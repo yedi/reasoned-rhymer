@@ -47,7 +47,7 @@
                      :className (when (= (:viewing data) :post-analysis) "active")}
             (d/a #js {:href "#"
                       :onClick #(om/update! data :viewing :post-analysis)}
-               "Analyze Poem"))
+               "Analyze Song"))
           (d/li nil
             (d/a #js {:href "https://github.com/yedi/reasoned-rhymer" :target "_blank"}
               "View on Github")))
@@ -60,12 +60,13 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:post (chan) :title "" :text ""})
+      {:post (chan) :title "" :text "" :is-posting false})
     om/IWillMount
     (will-mount [_]
       (let [post-ch (om/get-state owner :post)]
         (go-loop []
           (let [posting (<! post-ch)]
+            (om/set-state! owner :is-posting true)
             (POST "/analyze"
                   {:params {:title (om/get-state owner :title)
                             :text (om/get-state owner :text)}
@@ -76,26 +77,32 @@
           (recur))))
     om/IRender
     (render [this]
-       (d/div #js {:id "add-poem" :className "nav-section col-md-12"}
-         (d/form #js {:id "add-poem-form" :className "form-info form-horizontal"}
-           (d/div #js {:className "form-group"}
-             (d/button #js {:type "button" :className "btn btn-info"
-                            :onClick (fn [e] (put!(om/get-state owner :post) 1) false)}
-                "Analyze poem or song"))
-           (d/div #js {:className "form-group"}
-             (d/input #js {:id "poem-title" :type "text" :className "form-control"
-                           :placeholder "Name of poem or song"
-                           :value (om/get-state owner :title)
-                           :onChange #(handle-change % owner :title)}))
+      (if (om/get-state owner :is-posting)
+        (d/div nil
+          (d/h4 nil "Loading... Please wait.")
+          "Your song is currently be analyzed, this make take a while.
+           Feel free to browse some other analyses while you wait.
+           Once the analyzing is complete, the analysis for this song will be shown.")
+        (d/div #js {:id "add-poem" :className "nav-section col-md-12"}
+          (d/form #js {:id "add-poem-form" :className "form-info form-horizontal"}
             (d/div #js {:className "form-group"}
-              (d/textarea #js {:id "poem-text" :rows 16 :className "form-control"
-                              :placeholder "Lyrics go here"
-                              :value (om/get-state owner :text)
-                              :onChange #(handle-change % owner :text)}))
-            (d/p #js {:className "text-warning"}
-              (d/strong nil "Note: ")
-              "Some slang words are not currently supported because they are missing from the dictionary.
-              This could result in some missing rhyme combos"))))))
+              (d/button #js {:type "button" :className "btn btn-info"
+                             :onClick (fn [e] (put!(om/get-state owner :post) 1) false)}
+                 "Analyze poem or song"))
+            (d/div #js {:className "form-group"}
+              (d/input #js {:id "poem-title" :type "text" :className "form-control"
+                            :placeholder "Name of poem or song"
+                            :value (om/get-state owner :title)
+                            :onChange #(handle-change % owner :title)}))
+             (d/div #js {:className "form-group"}
+               (d/textarea #js {:id "poem-text" :rows 16 :className "form-control"
+                               :placeholder "Lyrics go here"
+                               :value (om/get-state owner :text)
+                               :onChange #(handle-change % owner :text)}))
+             (d/p #js {:className "text-warning"}
+               (d/strong nil "Note: ")
+               "Some slang words are not currently supported because they are missing from the dictionary.
+               This could result in some missing rhyme combos")))))))
 
 (def COLORS [     "1CE6FF", "FF34FF", "FF4A46", "008941", "006FA6", "A30059",
         "FFDBE5", "7A4900", "0000A6", "63FFAC", "B79762", "004D43", "8FB0FF", "997D87",
