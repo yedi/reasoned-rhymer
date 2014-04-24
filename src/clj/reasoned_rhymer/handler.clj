@@ -39,6 +39,14 @@
         rs (analyze! title txt)]
     (generate-response (db/get-poem-data title))))
 
+(defn reanalyze!
+  ([]
+    (println "reanalyzing all songs")
+    (doall (map reanalyze! (db/get-all-titles))))
+  ([title]
+    (println (str "reanalyzing: " title))
+    (analyze! title (:text (db/get-poem-data title)))))
+
 (def dev false)
 
 (defroutes app-routes
@@ -65,6 +73,7 @@
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
    [nil "--create-db" "Detach from controlling process"]
+   [nil "--reanalyze" "Re-analyzes all the songs in the database"]
    ["-d" "--dev" "Run the dev server"]
    ["-h" "--help"]])
 
@@ -73,6 +82,9 @@
     (when (< 0 (count errors)) (println (clojure.string/join "\n" errors)))
     (when (:create-db options)
       (db/init-db!)
+      (System/exit 0))
+    (when (:reanalyze options)
+      (reanalyze!)
       (System/exit 0))
     (when (:dev options)
       (def dev true))
