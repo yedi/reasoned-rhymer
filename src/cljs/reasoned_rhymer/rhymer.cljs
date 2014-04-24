@@ -294,19 +294,23 @@
     om/IInitState
     (init-state [_]
       {:get (chan) :selected (or (get-in data [:analysis :title])
-                                 (first (:titles data)))})
+                                 (first (:titles data)))
+       :is-loading false})
     om/IWillMount
     (will-mount [_]
       (let [get-ch (om/get-state owner :get)]
         (go-loop []
           (let [getting (<! get-ch)]
+            (om/set-state! owner :is-loading true)
             (GET "/analysis"
                  {:params {:title (om/get-state owner :selected)}
-                  :handler #(update-analysis % data)})
+                  :handler #(do (update-analysis % data)
+                                (om/set-state! owner :is-loading false))})
             (print (str "Retrieving: " getting)))
           (recur))))
     om/IRender
     (render [this]
+            (println (om/get-state owner :is-loading))
       (let [selected (om/get-state owner :selected)
             get-ch (om/get-state owner :get)]
         (d/div #js {:id "view-analyses" :className "nav-section"}
@@ -316,8 +320,9 @@
               (map #(d/option nil %) (:titles data)))
             " "  ; needed because bootstrap is silly
             (d/button #js {:type "button" :className "btn btn-info"
-                           :onClick (fn [e] (put! get-ch selected) false)}
-              "See Analysis"))
+                           :onClick (fn [e] (put! get-ch selected) false)
+                           :disabled (when (om/get-state owner :is-loading) true)}
+              (if (om/get-state owner :is-loading) "Loading Analysis..." "See Analysis")))
           (if (:analysis data)
             (om/build analysis-view (:analysis data))
             (d/h4 nil "Select a song to load it's rhyme analysis")))))))
