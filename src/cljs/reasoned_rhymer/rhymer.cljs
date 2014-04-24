@@ -310,7 +310,6 @@
           (recur))))
     om/IRender
     (render [this]
-            (println (om/get-state owner :is-loading))
       (let [selected (om/get-state owner :selected)
             get-ch (om/get-state owner :get)]
         (d/div #js {:id "view-analyses" :className "nav-section"}
