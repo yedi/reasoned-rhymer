@@ -33,6 +33,9 @@
   - name: Upload web app's create database config file
     copy: src=files/create-database-upstart.conf dest=/etc/init/create-database.conf
 
+  - name: Upload web app's reanalyze songs config file
+    copy: src=files/reanalyze-songs-upstart.conf dest=/etc/init/reanalyze-songs.conf
+
   - name: Make app log directory
     file: state=directory path=/var/log/${project_name} owner=${project_name} group=${project_name}
 
