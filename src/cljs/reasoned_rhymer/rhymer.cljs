@@ -145,7 +145,7 @@
            spans '()]
       (cond
         (empty? tokens) (reverse spans)
-        (re-matches #"\s*" (first tokens))
+        (re-matches #"\s*[-_]*" (first tokens))
           (recur (rest tokens)
                  idx
                  (apply (partial conj spans)
