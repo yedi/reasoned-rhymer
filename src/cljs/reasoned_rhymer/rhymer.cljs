@@ -202,8 +202,9 @@
 ;; ======================================================================
 
 (defn word-slugs [idxs text words-ch]
-  (map (fn [idx] (d/a #js {:onClick (a- #(put! words-ch [:remove idx])) :href "#"}
-                      (str (get (str/split text #"\s+") idx) " ")))
+  (map (fn [idx]
+         (d/a #js {:onClick (a- #(put! words-ch [:remove idx])) :href "#"}
+              (str (nth (remove str/blank? (str/split text #"\s+")) idx) " ")))
        idxs))
 
 (defn combo-view [data owner]
