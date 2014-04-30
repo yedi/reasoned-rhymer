@@ -49,10 +49,15 @@
 
 (def dev false)
 
+(defn gen-context [page-version]
+  {:app-state (pr-str {:titles (db/get-all-titles)}) :dev dev
+   :ga-id (when-not dev (env :ga-id)) :page-version page-version})
+
 (defroutes app-routes
   (GET "/" [] (selmer/render-file "templates/client.html"
-                                  {:app-state (pr-str {:titles (db/get-all-titles)})
-                                   :dev dev :ga-id (when-not dev (env :ga-id))}))
+                                  (gen-context "normal")))
+  (GET "/witty" [] (selmer/render-file "templates/client.html"
+                                  (gen-context "wit")))
   (GET "/analysis" req (get-analysis req))
   (POST "/analyze" req (new-analysis req))
   (route/resources "/")
