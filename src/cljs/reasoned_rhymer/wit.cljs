@@ -35,12 +35,31 @@
     (render [this]
       (d/div #js {:id "microphone"} ""))))
 
+
+(defn analyze-text [text data]
+  (POST "/analyze_text"
+    {:params {:text text}
+     :handler (fn [resp]
+                (c/update-analysis resp data)
+                (om/update! data :viewing :get-analysis))}))
+
 (defn wit-handler [data resp]
-  (when (= (get-in resp ["outcome" "intent"]) "get_analysis")
+  (println resp)
+  (cond
+    (= (get-in resp ["outcome" "intent"]) "get_analysis")
     (let [song (get-in resp ["outcome" "entities" "song_to_grab" "value"])]
       (do (c/get-analysis song #(c/update-analysis % data))
           (om/update! data [:wit :info]
-                      (str "Ok, we will get the analysis for " song))))))
+                      (str "Ok, we will get the analysis for " song))))
+
+    (= (get-in resp ["outcome" "intent"]) "analyze")
+    (let [text (get-in resp ["outcome" "entities" "message_body" "value"])]
+      (do (analyze-text text data)
+          (om/update! data [:wit :info]
+                      (str "Ok, we are analyzing the text: '" text "'"))))
+
+     :else
+     (om/update! data [:wit :info] "Wit couldn't understand you")))
 
 (defn nlp-comp [data owner]
   (reify
@@ -60,18 +79,23 @@
           (recur))))
     om/IRender
     (render [this]
-      (d/form #js {:id "wit-text-form" :className "form-info form-inline"
+      (d/form #js {:id "wit-text-form" :className "form-info"
                    :onSubmit (fn [e] (put! (om/get-state owner :get) 1) false)}
-        "Type natural language: "
-        (d/div #js {:className "form-group"}
-          (d/input #js {:id "poem-title" :type "text" :className "form-control"
-                        :placeholder "What to ask wit"
-                        :value (om/get-state owner :text)
-                        :onChange #(c/handle-change % owner :text)}))
-        (d/span nil " ")
-        (d/div #js {:className "form-group"}
-          (d/button #js {:type "submit" :className "btn btn-info"}
-            "Ask Wit"))))))
+        (d/h4 #js {:className "col-xs-"} "Type natural language: "
+              (d/small nil
+                "You can "
+                (d/strong nil "get / retrieve")
+                " an existing song's analysis or "
+                (d/strong nil "analyze")
+                " some new text"))
+        (d/div #js {:className "row"}
+          (d/div #js {:className "col-xs-10"}
+            (d/input #js {:id "poem-title" :type "text" :className "form-control"
+                          :placeholder "What to ask wit"
+                          :value (om/get-state owner :text)
+                          :onChange #(c/handle-change % owner :text)}))
+          (d/div #js {:className "col-xs-2"}
+            (d/button #js {:type "submit" :className "btn btn-info"} "Ask Wit")))))))
 
 (defn wit [data owner]
   (reify

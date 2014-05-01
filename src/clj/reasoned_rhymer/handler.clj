@@ -47,6 +47,11 @@
     (println (str "reanalyzing: " title))
     (analyze! title (:text (db/get-poem-data title)))))
 
+(defn analyze-text [text]
+  (let [poem (rhyme/format-as-poem text)
+        rs (rhyme/rhyme-streams poem 1 6 24 2)]
+    (generate-response {:text text :analysis rs :title "custom"})))
+
 (def dev false)
 
 (defn gen-context [page-version]
@@ -61,6 +66,7 @@
                                   (gen-context "wit")))
   (GET "/analysis" req (get-analysis req))
   (POST "/analyze" req (new-analysis req))
+  (POST "/analyze_text" req (analyze-text (get-in req [:params :text])))
   (route/resources "/")
   (route/not-found "Page not found"))
 
