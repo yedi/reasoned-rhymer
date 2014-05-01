@@ -11,7 +11,8 @@
             [rhyme-finder.core :as rhyme]
             [reasoned-rhymer.db :as db]
             [selmer.parser :as selmer]
-            [clojure.tools.cli :refer [parse-opts]]))
+            [clojure.tools.cli :refer [parse-opts]]
+            [clj-http.client :as client]))
 
 (selmer/cache-off!)
 
@@ -54,6 +55,12 @@
 
 (def dev false)
 
+(defn wit-api [q]
+  (generate-response
+   (:body (client/get "https://api.wit.ai/message"
+            {:headers {:Authorization (str "Bearer " (env :wit-bearer-id))}
+             :query-params {"q" q} :as :json}))))
+
 (defn gen-context [page-version]
   {:app-state (pr-str {:titles (db/get-all-titles)}) :dev dev
    :ga-id (when-not dev (env :ga-id)) :page-version page-version
@@ -64,6 +71,7 @@
                                   (gen-context "normal")))
   (GET "/witty" [] (selmer/render-file "templates/client.html"
                                   (gen-context "wit")))
+  (GET "/wit_api" req (wit-api (get-in req [:params :q])))
   (GET "/analysis" req (get-analysis req))
   (POST "/analyze" req (new-analysis req))
   (POST "/analyze_text" req (analyze-text (get-in req [:params :text])))

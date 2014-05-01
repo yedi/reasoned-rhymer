@@ -3,12 +3,11 @@
 	<head>
 		<title>Reasoned Rhymer</title>
         {% if dev %}
-        <script type='text/javascript' id='lt_ws' src='http://localhost:49155/socket.io/lighttable/ws.js'></script>
+        <script type='text/javascript' id='lt_ws' src='http://localhost:51784/socket.io/lighttable/ws.js'></script>
         {% endif %}
         <script type='text/javascript'>
             var initial_app_state = "{{ app-state }}";
             var page_version = "{{ page-version }}";
-            var bearer = "{{ bearer }}"
         </script>
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">

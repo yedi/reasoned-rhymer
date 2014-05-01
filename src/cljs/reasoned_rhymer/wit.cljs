@@ -44,16 +44,15 @@
                 (om/update! data :viewing :get-analysis))}))
 
 (defn wit-handler [data resp]
-  (println resp)
   (cond
-    (= (get-in resp ["outcome" "intent"]) "get_analysis")
-    (let [song (get-in resp ["outcome" "entities" "song_to_grab" "value"])]
+    (= (get-in resp [:outcome :intent]) "get_analysis")
+    (let [song (get-in resp [:outcome :entities :song_to_grab :value])]
       (do (c/get-analysis song #(c/update-analysis % data))
           (om/update! data [:wit :info]
                       (str "Ok, we will get the analysis for " song))))
 
-    (= (get-in resp ["outcome" "intent"]) "analyze")
-    (let [text (get-in resp ["outcome" "entities" "message_body" "value"])]
+    (= (get-in resp [:outcome :intent]) "analyze")
+    (let [text (get-in resp [:outcome :entities :message_body :value])]
       (do (analyze-text text data)
           (om/update! data [:wit :info]
                       (str "Ok, we are analyzing the text: '" text "'"))))
@@ -72,9 +71,8 @@
         (go-loop []
           (let [getting (<! get-ch)]
             (om/set-state! owner :is-getting true)
-            (GET "https://api.wit.ai/message"
+            (GET "/wit_api"
                   {:params {:q (om/get-state owner :text)}
-                   :headers {:Authorization (str "Bearer " js/bearer)}
                    :handler (partial wit-handler data)}))
           (recur))))
     om/IRender

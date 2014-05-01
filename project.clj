@@ -16,7 +16,8 @@
                  [selmer "0.5.4"]
                  [rhyme-finder "0.1.0-SNAPSHOT"]
                  [org.clojure/tools.cli "0.3.1"]
-                 [environ "0.4.0"]]
+                 [environ "0.4.0"]
+                 [clj-http "0.9.0"]]
   :plugins [[lein-cljsbuild "1.0.2"]
             [lein-ring "0.8.8"]]
   :source-paths ["src/clj"]
@@ -30,7 +31,7 @@
                                    :source-map true}}
                        {
                         :id "prod"
-                        :source-paths ["src"]
+                        :source-paths ["src/cljs"]
                         :compiler {
                                    :output-to "resources/public/rhymer.js"
                                    :optimizations :advanced
