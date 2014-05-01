@@ -16,7 +16,9 @@
 
 
 (defn gen-app-state [init-data comms]
-  (assoc init-data :comms comms :viewing :get-analysis))
+  (assoc init-data :comms comms :viewing :get-analysis
+    :wit {:mic "Please allow access to the mic"
+          :info "Wit is waiting for your input"}))
 
 (def controls-ch
   (chan))

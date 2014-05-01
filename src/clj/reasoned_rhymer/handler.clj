@@ -51,7 +51,8 @@
 
 (defn gen-context [page-version]
   {:app-state (pr-str {:titles (db/get-all-titles)}) :dev dev
-   :ga-id (when-not dev (env :ga-id)) :page-version page-version})
+   :ga-id (when-not dev (env :ga-id)) :page-version page-version
+   :bearer (env :wit-bearer-id)})
 
 (defroutes app-routes
   (GET "/" [] (selmer/render-file "templates/client.html"
