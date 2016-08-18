@@ -107,7 +107,8 @@
       (reanalyze!)
       (System/exit 0))
     (when (:dev options)
-      (def dev true))
+      (def dev true)
+      (println (str "starting dev")))
     (println (str "starting server on port " (:port options)))
     (start-server (:port options))))
 

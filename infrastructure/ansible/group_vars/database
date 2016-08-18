@@ -3,4 +3,4 @@
 datomic_version: "0.9.4384"
 datomic_dir: /var/lib/datomic
 datomic_data_dir: /var/lib/datomic/data
-datomic_filename: datomic-free-${datomic_version}
+datomic_filename: datomic-free-{{ datomic_version }}

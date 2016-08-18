@@ -266,16 +266,16 @@
 (defn word=>combo [analysis]
   (update-values (reduce add-combos {} (map vector (range) analysis)) sort))
 
-(defn update-analysis [resp data]
-  (let [resp (update-in resp [:analysis] (partial into []))
-        wmap (word=>combo (:analysis resp))]
-    (om/update! data :analysis (assoc resp :words wmap))))
-
 (defn get-analysis [title callback]
   (print (str "Retrieving: " title))
   (GET "/analysis"
        {:params {:title title}
         :handler callback}))
+
+(defn update-analysis [resp data]
+  (let [resp (update-in resp [:analysis] (partial into []))
+        wmap (word=>combo (:analysis resp))]
+    (om/update! data :analysis (assoc resp :words wmap))))
 
 (defn get-view [data owner]
   (reify
