@@ -27,7 +27,10 @@
   (chan))
 
 (def app-state
-  (let [init-data (cljs.reader/read-string js/initial_app_stat)]
+  (let [init-data (cljs.reader/read-string
+                   (-> js/initial_app_state
+                       (str/replace #"&quot;" "\"")
+                       (str/replace #"&amp;" "&")))]
     (atom (gen-app-state init-data {:controls controls-ch :api api-ch}))))
 
 (defn app [data owner opts]
